@@ -4,6 +4,8 @@ library(annotables)
 library(RColorBrewer)
 library(scales) ## for muted
 library(cowplot)
+library(ggnewscale)
+
 source("/gpfs/data/stranger-lab/askol/TCGA2/DE_Surv/Code/Explore_DESurv_funcs.r")
 PlotDir <- "/gpfs/data/stranger-lab/askol/TCGA2/DE_Surv/Results/Plots/"
 

@@ -107,26 +107,30 @@ filter.data <- function(data, sx, desx, qnt, psurv, empmd, exX, DETiss) {
 plot.sharing.all <- function(data, PlotDir){    
     
     ## DE BY TCGA : NO X CHROMOSOME GENES
+    print("Working on DE by TCGA, No X")
     shared.join <- join.shared(data, qnt=0.01, psurv=0.01, empmd=0.01,
                                exX=TRUE, DETiss = "TCGA")
     PlotFile <- paste0(PlotDir, "Shared_DeTCGA_NoX_Psurv.pdf")
     plot.sharing(shared.join, PlotFile)
     
     ## DE BY TCGA : X CHROMOSOME GENES INCL
-    shared.join <- join.shared(data, qnt=0.01, psurv=0.001, empmd=0.01,
-                               exX=FALSE, DEPop = "TCGA")
+    print("Working on DE by TCGA, X genes included")
+    shared.join <- join.shared(data, qnt=0.01, psurv=0.01, empmd=0.01,
+                               exX=FALSE, DETiss = "TCGA")
     PlotFile <- paste0(PlotDir, "Shared_DeTCGA_InclX_Psurv.pdf")
     plot.sharing(shared.join, PlotFile)
     
     ## DE BY GTEX : NO X
-    shared.join <- join.shared(data, qnt=0.01, psurv=0.001, empmd=0.01,
-                               exX=TRUE, DEPop = "GTEx")
+    print("Working on DE by GTEx, no X genes")
+    shared.join <- join.shared(data, qnt=0.01, psurv=0.01, empmd=0.01,
+                               exX=TRUE, DETiss= "GTEx")
     PlotFile <- paste0(PlotDir, "Shared_DeGTEx_NoX_Psurv.pdf")
     plot.sharing(shared.join, PlotFile)
     
     ## DE BY GTEX : X INCL
-    shared.join <- join.shared(data, qnt=0.01, psurv=0.001, empmd=0.01,
-                               exX=FALSE, DEPop = "GTEx")
+    print("Working on DE by GTEx, X genes included")
+    shared.join <- join.shared(data, qnt=0.01, psurv=0.01, empmd=0.01,
+                               exX=FALSE, DETiss = "GTEx")
     PlotFile <- paste0(PlotDir, "Shared_DeGTEx_InclX_Psurv.pdf")
     plot.sharing(shared.join, PlotFile)
     
@@ -192,7 +196,7 @@ plot.sharing <- function(shared.join, PlotFile){
         p <- p +geom_tile(aes(fill=logP), data=subset(j, DEPop=="f")) +
             scale_fill_gradient2("UpReg in Females", high = "red", low="white", limits=c(0,10))
 
-        ggtitle(paste0("Genes with Significant Survival P-Values in ", POP[[SPop]]))
+        ggtitle(paste0("Genes with Significant Survival P-Values in ", POP[[sp]]))
         print(p)
         
     }
