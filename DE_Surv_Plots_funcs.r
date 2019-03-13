@@ -188,7 +188,7 @@ summary.de.surv.plot <- function(tissues, project,
     no.x.ind.tcga <- which(geneInfo.tcga$chr %in% c(1:22))
 
     de.study <- "_DEgtex_"
-    if (sum(tissues %in% projects)){
+    if (any(grepl("TCGA", tissues))){
         de.study = "_DEtcga_"
     }
 
