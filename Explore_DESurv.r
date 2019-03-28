@@ -27,5 +27,10 @@ data <- data %>% arrange(emppmn, Psurv)
 plot.sharing.all(data, PlotDir)
 
 
+## CREATE A HEATMAP THAT SHOWS WHICH TISSUE/PROJECT FOUND SEX DE GENES THAT SHOW
+## ENRICHMENT FOR SMALL SURVIVAL P-VALUE IN CANCER ##
+data <- collect.data.enrichment(ResultDir)
+plot.enrich.all(data, PlotDir)
+
 
 

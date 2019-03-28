@@ -19,6 +19,32 @@ collect.data <- function(ResultDir){
     return(data)
 }
 
+collect.data.enrichment <- function(ResultDir){
+    
+    patrn <- "TCGA_DESurv_Best\\.txt$|GTEx_DESurv_Best\\.txt$"
+    files <- dir(ResultDir, pattern=patrn)
+    data <- c()
+    
+    for (file in files){
+
+        if (file.exists(paste0(ResultDir,file)) == FALSE){ next }
+        print(paste0("Working on file: ",file))
+        data.tmp <- read.table(file = paste0(ResultDir,file), header=T, as.is=T)       
+        data.tmp <- filter(data.tmp, quant == .01)
+        data.tmp <- mutate(data.tmp, ID = paste(tissue,sex,desex,quant,excl.x, both, sep="."))
+
+        data.tmp <- data.tmp[!duplicated(data.tmp$ID),]
+        data.tmp <- select(data.tmp, -SYMBOL, -ENSEMBL, -start, -chr, -biotype,
+                           -Psurv, -logP, -logFC, -ID) 
+        data.tmp <- mutate(data.tmp, emplogpmd = -log10(emppmd))
+
+        data <- rbind(data, data.tmp)
+
+    }
+    return(data)
+}
+
+        
 find.shared <- function(data, geneInfo){
     
     tcga <- unique(c(data$tissue, data$project))
@@ -203,3 +229,176 @@ plot.sharing <- function(shared.join, PlotFile){
     dev.off()
     print(paste0("Wrote to plots to ",file))
 }
+
+
+
+plot.enrich.all <- function(data, PlotDir){    
+    
+    ## DE BY TCGA : NO X CHROMOSOME GENES
+    print("Working on DE by TCGA, No X")
+    PlotFile <- paste0(PlotDir, "SurvpEnrich_DeTCGA_NoX.pdf")
+    d <- filter(data, excl.x==TRUE, grepl("TCGA",tissue), both==FALSE)
+    plot.enrich(d, PlotFile)
+    
+    ## DE BY TCGA : X CHROMOSOME GENES INCL
+    print("Working on DE by TCGA, X genes included")
+    PlotFile <- paste0(PlotDir, "SurvpEnrich_DeTCGA_InclX_Psurv.pdf")
+    d <- filter(data, excl.x==FALSE, grepl("TCGA",tissue), both==FALSE)
+    plot.enrich(d, PlotFile)
+    
+    ## DE BY GTEX : NO X
+    print("Working on DE by GTEx, no X genes")
+    PlotFile <- paste0(PlotDir, "SurvpEnrich_DeGTEx_NoX_Psurv.pdf")
+    d <- filter(data, excl.x==TRUE, grepl("TCGA",tissue)==FALSE, both==FALSE)
+    plot.enrich(d, PlotFile)
+    
+    ## DE BY GTEX : X INCL
+    print("Working on DE by GTEx, X genes included")
+    PlotFile <- paste0(PlotDir, "SurvpEnrich_DeGTEx_InclX_Psurv.pdf")
+    d <- filter(data, excl.x==FALSE, grepl("TCGA",tissue)==FALSE, both==FALSE)
+    plot.enrich(d, PlotFile)
+    
+}    
+
+
+
+plot.enrich <- function(d, PlotFile){
+
+  
+    gtex.labs <- c(Adipose_Subcutaneous = " AdSub",
+                   Adipose_Visceral_Omentum = "AdVsc",
+                   Adrenal_Gland = "AGld",
+                   Artery_Aorta = "Aort",
+                   Artery_Coronary = "ArtCor",
+                   Artery_Tibial = "ArtTib",
+                   Brain_Amygdala = "BrAmy",
+                   Brain_Anterior_cingulate_cortex_BA24 = "BrAnt",
+                   Brain_Caudate_basal_ganglia = "BrCaud",
+                   Brain_Cerebellar_Hemisphere = "BrCerH",
+                   Brain_Cerebellum = "BrCer",
+                   Brain_Cortex = "BrCtx",
+                   Brain_Frontal_Cortex_BA9 = "BrFCtx",
+                   Brain_Hippocampus = "BrHip",
+                   Brain_Hypothalamus = "BrHyp",
+                   Brain_Nucleus_accumbens_basal_ganglia = "BrNuc",
+                   Brain_Putamen_basal_ganglia = "BrPut",
+                   Brain_Spinal_cord_cervical_c_1 = "BrSp",
+                   Breast_Mammary_Tissue = "Brst",
+                   Cells_Cultured_fibroblasts = "Fblst",
+                   Cells_EBV_transformed_lymphocytes = "Lcl",
+                   Colon_Sigmoid = "ColSg",
+                   Colon_Transverse = "ColTv",
+                   Esophagus_Gastroesophageal_Junction = "EsGJt",
+                   Esophagus_Mucosa = "EsMuc",
+                   Esophagus_Muscularis = "EsMsc",
+                   Heart_Atrial_Appendage = "HtAt",
+                   Heart_Left_Ventricle = "HtLV",
+                   Liver = "Liv",
+                   Lung = "Lng",
+                   Minor_Salivary_Gland = "SalG",
+                   Muscle_Skeletal = "MSk",
+                   Nerve_Tibial = "NvTb",
+                   Pancreas = "Panc",
+                   Pituitary = "Pit",                   
+                   Skin_Not_Sun_Exposed_Suprapubic = "SkNE",
+                   Skin_Sun_Exposed_Lower_leg = "SkE",
+                   Stomach = "Stm",
+                   Thyroid = "Thr",
+                   Whole_Blood = "Bld",                  
+                   TCGA_GBM = "GBM", TCGA_SKCM = "SKCM",  TCGA_THCA = "THCA",
+                   TCGA_LIHC = "LIHC", TCGA_LUAD = "LUAD", TCGA_KIRC="KIRC",
+                   TCGA_LAML = "LAML", TCGA_HNSC = "HNSC", TCGA_LGG = "LGG",
+                   TCGA_LUSC = "LUSC", TCGA_STAD="STAD", TCGA_COAD="COAD",
+                   TCGA_BLCA="BLCA", TCGA_KIRP="KIRP", TCGA_SARC="SARC",
+                   TCGA_PAAD="PAAD", TCGA_ESCA="ESCA", TCGA_PCPG="PCPG",
+                   TCGA_READ="READ", TCGA_THYM="THYM", TCGA_KICH="KICH",
+                   TCGA_ACC="ACC", TCGA_MESO="MESO", TCGA_UVM="UVM",
+                   TCGA_DLBC="DLBC", TCGA_CHOL="CHOL")
+    
+    d <- mutate(d, tissue = gsub("-","_",tissue))
+    d <- mutate(d, sex = substring(sex, 1,1)) %>% mutate(desex = substring(desex, 1,1))
+    d <- d %>% mutate(project = gsub("-","_",project))
+    d <- mutate(d, border=as.character(1*(tissue == project)))
+    valRange <- get.range(d$emplogpmd)
+    d <- mutate(d, PvalRange = valRange$strng.val)
+    break.string <- valRange$break.strng
+    tissues <- unique(d$tissue)
+    no.tis <- length(tissues)
+    tis.p.plt = 21
+    nplots<- no.tis %/% tis.p.plt
+  
+    if (tis.p.plt*nplots < no.tis){
+        nplots <- nplots+1
+    }
+
+    p <- list()
+    print("*** ****")
+    print(PlotFile)
+    pdf(file = PlotFile, height=10, width=20)
+
+    ## WHEN DE TISSUE IS TCGA ##
+    if (grepl("TCGA",d$tissue[1])){
+        p <- plot.enrich.cmd(d, gtex.labs, break.string)
+        print(p)
+    }else{
+
+        for (i in 1:nplots){
+            
+            ## used to make sure indices aren't more than total number of tissues ##
+            ind <- intersect(c(1:tis.p.plt) + (i-1)*tis.p.plt, 1:no.tis)
+            tss <- gsub("-","_",tissues[ind])
+            tmp <- d %>% filter(tissue %in% tss)
+            
+            p <- plot.enrich.cmd(tmp, gtex.labs, break.string)
+            print(p)            
+        }        
+    }
+    dev.off()
+    print(paste0("Wrote plots to ",PlotFile))
+}
+
+
+
+plot.enrich.cmd <- function(tmp, gtex.labs, break.string){
+
+    cols = c('#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000')
+    names(cols) <- break.string
+    ##    p <- ggplot(tmp, aes(x=desex, y=sex, fill=emplogpmd, color=border)) +
+    p <- ggplot(tmp, aes(x=desex, y=sex, fill=PvalRange, color=border)) + 
+        geom_tile() +
+            
+            ## scale_fill_gradient("Enrich P-value", high = "red", low="white", limits=c(0,4)) +
+            scale_fill_manual(values = cols) +
+                scale_color_manual(values = c("white","black"), breaks = c(0, 1), guide=FALSE) +
+                facet_grid(project~tissue, labeller = 
+                           labeller(project=gtex.labs, tissue = gtex.labs)) +
+                               theme(legend.position="bottom") + 
+                                   theme(strip.text.x=element_text(angle=90, size=6)) +
+                                       theme(strip.text.y=element_text(angle=90, size=6)) +
+                                           ylab("Project") + xlab("DE Source") +
+                                               theme(axis.text.x=element_text(angle = 90, 
+                                                         hjust = 0, size=6),
+                                                     axis.text.y=element_text(angle = 90, 
+                                                     hjust = 0, size=6))
+    return(p)
+}
+
+get.range <- function(vals){
+
+    rng <- cbind(1*(vals>=log10(.05)),
+                 1*(vals>=2),
+                 1*(vals>=3),
+                 1*(vals>=-log10(1/10001)))
+
+    rng <- rowSums(rng)
+
+    break.strng <- c(">0.05", "<0.05", "<0.01", "<0.001", "<0.0001")
+
+    strng.val <- break.strng[rng]
+
+    break.strng.colors <- 
+
+    return(list(strng.val=strng.val, break.strng = break.strng))
+}
+                 
+    
